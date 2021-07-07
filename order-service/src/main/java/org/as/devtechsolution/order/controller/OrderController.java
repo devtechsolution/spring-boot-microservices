@@ -1,8 +1,7 @@
 package org.as.devtechsolution.order.controller;
 
-import java.util.Arrays;
+import java.util.UUID;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.as.devtechsolution.order.dto.OrderDto;
 import org.as.devtechsolution.order.entity.Order;
 import org.as.devtechsolution.order.repository.OrderRepository;
@@ -31,7 +30,7 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<Order> placeOrder(@RequestBody OrderDto orderDto) {
     	
-    	String randomNumber = RandomStringUtils.randomAlphanumeric(17).toUpperCase();
+    	String randomNumber = UUID.randomUUID().toString();
 		
     	Order order = Order.builder().orderNumber(randomNumber)
     			.orderLineItems(orderDto.getOrderLineItemsList())
