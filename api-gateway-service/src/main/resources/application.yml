@@ -9,6 +9,8 @@ spring:
       ribbon:
         enabled: false
     gateway:
+      default-filters:
+      - TokenRelay
       discovery:
         locator:
           enabled: true
@@ -23,6 +25,22 @@ spring:
           uri: lb://order-service
           predicates:
             - Path=/api/order/**
+            
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8180/auth/realms/microservice-realm
+        registration:
+          spring-cloud-gatewayclient:
+            client-id: spring-cloud-gateway-client
+            client-secret: c8cbea01-64be-405f-8e40-2aea41f0e8bf
+            provider: keycloak
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:9900/login/oauth2/code/spring-cloud-gateway-client
+
+            
             
 
         
