@@ -2,6 +2,7 @@ package org.as.devtechsolution.order.controller;
 
 import java.util.UUID;
 
+import org.as.devtechsolution.order.client.InventoryClient;
 import org.as.devtechsolution.order.dto.OrderDto;
 import org.as.devtechsolution.order.entity.Order;
 import org.as.devtechsolution.order.repository.OrderRepository;
@@ -13,32 +14,43 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/order")
-@RequiredArgsConstructor
-@AllArgsConstructor
+//@RequiredArgsConstructor
 @Slf4j
 public class OrderController {
+
+	private final OrderRepository orderRepository;
+	private final InventoryClient inventoryClient;
 	
-	@Autowired
-	private OrderRepository orderRepository;
+	
+	
 
-    @PostMapping
-    public ResponseEntity<Order> placeOrder(@RequestBody OrderDto orderDto) {
-    	
-    	String randomNumber = UUID.randomUUID().toString();
+	@PostMapping
+	public ResponseEntity<?> placeOrder(@RequestBody OrderDto orderDto) {
+		boolean allProductInStock = orderDto.getOrderLineItemsList().stream()
+				.allMatch(orderItem -> inventoryClient.checkStock(orderItem.getSkuCode()));
 		
-    	Order order = Order.builder().orderNumber(randomNumber)
-    			.orderLineItems(orderDto.getOrderLineItemsList())
-    			.build();
-		return new  ResponseEntity<Order>(orderRepository.save(order), HttpStatus.CREATED);
-    }
+		if (allProductInStock) {
+			Order order = Order.builder().orderNumber(UUID.randomUUID().toString()).orderLineItems(orderDto.getOrderLineItemsList())
+					.build();
+			return new ResponseEntity<>(orderRepository.save(order), HttpStatus.CREATED);
+		} else {
+			return new ResponseEntity<>("Order failed, one of the products in the order is not in stock",
+					HttpStatus.NOT_FOUND);
+		}
+	}
 
-    private Boolean handleErrorCase() {
-        return false;
-    }
+	private Boolean handleErrorCase() {
+		return false;
+	}
+
+	public OrderController(OrderRepository orderRepository, InventoryClient inventoryClient) {
+		super();
+		this.orderRepository = orderRepository;
+		this.inventoryClient = inventoryClient;
+	}
 }
